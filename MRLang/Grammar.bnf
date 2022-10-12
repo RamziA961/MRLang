@@ -1,0 +1,60 @@
+<root> ::= (<statement> | <fn-declaration>)[<comment>]<nl>[';']
+
+// Numerical Literals *********************************
+<digit> ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+<unsigned-integer> ::= <digit>[<integer>]
+//<signed-integer> ::= '-'{ <digit> }
+<integer> ::= ['-']<digit>[<integer>]
+
+<float> ::= <integer>'.'<unsigned-integer>
+<constant> ::= <integer> | <float>
+//*****************************************************
+
+<bool> ::= 'true' | 'false'
+
+private <char> ::= ' ' | '!' | '"' | '#' | '$' | '%' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | '-' | '.' | '/' | 
+           '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | ':' | ';' | '<' | '=' | '>' | '?' | 
+           '@' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 
+           'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z' | '[' | '\' | ']' | '^' | '_' |
+           '`' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' |
+           'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z' | '{' | '|' | '}' | '~'
+
+<str> ::= '"'{<char>}'"' | "'"{<char>}"'"
+
+<bin-op> ::= '+' | '-' | '*' | '/' | '^'
+<int-bin-op> ::= '%' | <bin-op>
+
+<log-op> ::= '&&' | '||' | '==' | '!=' | '>' | '>=' | '<' | '<='
+<prefix> ::= '!'
+
+<factor> ::= <constant> | '(' <expr> ')'
+<term> ::=  <factor>{('*'|'/'|'^') <factor>}
+<expr> ::= <term>{'+'<term> | '-'<term>} | <str> | <condition> | <nil>
+
+<condition> ::= [<prefix>]['('](<identifier>|<expr>|<bool>)[<log-op> (<identifier>|<expr>|<bool>)][')']
+
+<type> ::= 'int' | 'float' | 'str' | 'bool'
+<identifier> ::= <char>[{<char> | <digit> | "_"}]
+
+<declaration> ::= <identifier>':'<type>'='<expr>
+<assignment> ::= <identifier>'='(<expr> | <identifier>)
+
+<statement> ::= <if-statement> | <loop-statement> | <assignment> | <declaration> | <block>
+<statement-seq> ::= <statement> | <statement><statement-seq>
+<block> ::= {<statement-seq>} 
+
+<if-statement> ::= 'if' <condition> '{' <statement> '}' ['else' '{' <statement> '}']
+<loop-statement> ::= 'loop' [<condition>] '{'<statement> | <break> | <continue>'}'
+
+<continue> ::= 'continue'
+<break> ::= 'break'
+<return> ::= 'return' | 'return' <identifier> | 'return' <expr>
+
+<fn-args> ::= {<identifier>':'<type>[',']}
+<fn-declaration> ::= ('fn' | 'func')<identifier>'('[<fn-args>]')'['->'<type>]'{'<statement> | <return>'}'
+
+<comment> ::= '//'[{<char>}]
+
+<nl> ::= '\n' | '\r'
+<nil> ::= 'nil' | 'null'
