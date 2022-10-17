@@ -1,4 +1,4 @@
 ﻿open Lexer
 
 
-Lexer.Lex "6 + 9 * 3"
+printfn "%A" (Lexer.Lex "93 * 74")
