@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm = "clr-namespace:GUI.ViewModels"
+             mc:Ignorable="d"
+             x:Class="GUI.Views.CTextEditor"
+>
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical">
+        <TextBox
+            FontSize="13"
+            VerticalAlignment="Stretch"
+            AcceptsReturn="True" 
+            TextWrapping="Wrap"
+            Foreground= "white"
+            CornerRadius="0"
+            CaretBrush="white"
+            AcceptsTab="True"
+            DataContext="{ResolveByName vm:CTextEditor}"
+            x:DataType="vm:CTextEditor"
+            Text="{CompiledBinding SourceCode, Mode=OneWayToSource}"
+        />
+        <TextBlock 
+            Background="yellow"
+            DataContext="{ResolveByName vm:CTextEditor}"
+            x:DataType="vm:CTextEditor"
+            Text="{CompiledBinding SourceCode, Mode=OneWay}"
+        />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

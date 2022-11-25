@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:GUI.ViewModels"
+             xmlns:views="clr-namespace:GUI.Views"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="550"
+             x:Class="GUI.Views.Main"
+>
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+    
+    <UserControl.Styles>
+        <Style>
+            <Style.Resources>
+                <StreamGeometry x:Key="play_regular">M13.7501344,8.41212026 L38.1671892,21.1169293 C39.7594652,21.9454306 40.3786269,23.9078584 39.5501255,25.5001344 C39.2420737,26.0921715 38.7592263,26.5750189 38.1671892,26.8830707 L13.7501344,39.5878797 C12.1578584,40.4163811 10.1954306,39.7972194 9.36692926,38.2049434 C9.12586301,37.7416442 9,37.2270724 9,36.704809 L9,11.295191 C9,9.50026556 10.4550746,8.045191 12.25,8.045191 C12.6976544,8.045191 13.1396577,8.13766178 13.5485655,8.31589049 L13.7501344,8.41212026 Z M12.5961849,10.629867 L12.4856981,10.5831892 C12.4099075,10.5581 12.3303482,10.545191 12.25,10.545191 C11.8357864,10.545191 11.5,10.8809774 11.5,11.295191 L11.5,36.704809 C11.5,36.8253313 11.5290453,36.9440787 11.584676,37.0509939 C11.7758686,37.4184422 12.2287365,37.5613256 12.5961849,37.370133 L37.0132397,24.665324 C37.1498636,24.5942351 37.2612899,24.4828088 37.3323788,24.3461849 C37.5235714,23.9787365 37.380688,23.5258686 37.0132397,23.334676 L12.5961849,10.629867 Z</StreamGeometry>
+                <StreamGeometry x:Key="layer_regular">M20.0256266,12.1919251 C19.8772338,12.4293536 19.6806426,12.6329794 19.4485757,12.7896246 L13.3986821,16.8733027 C12.5534904,17.4438072 11.4465096,17.4438072 10.6013179,16.8733027 L4.55142428,12.7896246 C3.79043588,12.2759574 3.49533538,11.3303569 3.77229147,10.5 L10.6132495,15.0595795 C11.4005138,15.5844224 12.4112447,15.617225 13.2264422,15.1579876 L13.3867505,15.0595795 L20.2270621,10.4994959 C20.4087649,11.0456562 20.3545192,11.665697 20.0256266,12.1919251 Z M20.2270621,13.7494959 C20.4087649,14.2956562 20.3545192,14.915697 20.0256266,15.4419251 C19.8772338,15.6793536 19.6806426,15.8829794 19.4485757,16.0396246 L13.3986821,20.1233027 C12.5534904,20.6938072 11.4465096,20.6938072 10.6013179,20.1233027 L4.55142428,16.0396246 C3.79043588,15.5259574 3.49533538,14.5803569 3.77229147,13.75 L10.6132495,18.3095795 C11.4005138,18.8344224 12.4112447,18.867225 13.2264422,18.4079876 L13.3867505,18.3095795 L20.2270621,13.7494959 Z M13.3867505,3.42450033 L19.7519246,7.66794971 C20.2114532,7.97430216 20.3356271,8.59517151 20.0292747,9.0547002 C19.9560398,9.16455248 19.8617768,9.25881544 19.7519246,9.33205029 L13.3867505,13.5754997 C12.547002,14.135332 11.452998,14.135332 10.6132495,13.5754997 L4.24807544,9.33205029 C3.78854675,9.02569784 3.66437288,8.40482849 3.97072534,7.9452998 C4.0439602,7.83544752 4.13822315,7.74118456 4.24807544,7.66794971 L10.6132495,3.42450033 C11.452998,2.86466797 12.547002,2.86466797 13.3867505,3.42450033 Z M11.560754,4.60622527 L11.4452998,4.67257577 L5.705,8.5 L11.4452998,12.3274242 C11.7438771,12.5264757 12.1228116,12.5485926 12.439246,12.3937747 L12.5547002,12.3274242 L18.294,8.5 L12.5547002,4.67257577 C12.2561229,4.47352427 11.8771884,4.45140743 11.560754,4.60622527 Z</StreamGeometry>
+            </Style.Resources>
+        </Style>
+    </UserControl.Styles>
+    
+    <DockPanel 
+        LastChildFill="True"
+        HorizontalAlignment="Stretch" 
+        VerticalAlignment="Stretch"
+        Margin="0 25 0 0"
+    >
+        <StackPanel Orientation="Horizontal" Spacing="5" DockPanel.Dock="Top">
+            <Button Foreground="white"
+                    x:CompileBindings="False"
+                    Command="{Binding RunCommand, FallbackValue={x:Null}, Mode=OneWayToSource}"
+            >
+                <PathIcon Data="{StaticResource play_regular}"/>
+            </Button>
+            <Button Foreground="white" 
+                    x:CompileBindings="False"
+                    Command="{Binding BuildCommand, FallbackValue={x:Null}, Mode=OneWayToSource}"
+            >
+                <PathIcon Data="{StaticResource layer_regular}"/>
+            </Button>
+        </StackPanel>
+        <SplitView 
+            IsPaneOpen="True" 
+            DockPanel.Dock="Bottom"  
+            DisplayMode="Inline" 
+            OpenPaneLength="500" 
+        >
+            <!-- <ScrollViewer> -->
+            <!-- <TextBox -->
+            <!--     FontSize="13" -->
+            <!--     VerticalAlignment="Stretch" -->
+            <!--     AcceptsReturn="True"  -->
+            <!--     TextWrapping="Wrap" -->
+            <!--     Name="TextEditor" -->
+            <!--     Foreground= "white" -->
+            <!--     CornerRadius="0" -->
+            <!--     CaretBrush="white" -->
+            <!--     Text="{Binding TextEditorContent, Mode=OneWayToSource}" -->
+            <!--     AcceptsTab="True" -->
+            <!-- /> -->
+            <!-- </ScrollViewer> -->
+            <views:CTextEditor/>    
+            
+            <SplitView.Pane>
+                <Border BorderThickness="3 0">
+                    <views:AlgolTextEditor/>
+                    <!-- <DockPanel -->
+                    <!--     VerticalAlignment="Stretch" -->
+                    <!--     HorizontalAlignment="Stretch" -->
+                    <!--     Background="#171515" -->
+                    <!--     LastChildFill="True" -->
+                    <!-- > -->
+                    <!--      -->
+                    <!--     ~1~ <DockPanel  @1@ -->
+                    <!--     ~1~     Background="white" @1@ -->
+                    <!--     ~1~     DockPanel.Dock="Bottom"  @1@ -->
+                    <!--     ~1~     HorizontalAlignment="Stretch" @1@ -->
+                    <!--     ~1~ > @1@ -->
+                    <!--     ~1~     <TextBox  @1@ -->
+                    <!--     ~1~         Foreground="white"  @1@ -->
+                    <!--     ~1~         Text = ">"  @1@ -->
+                    <!--     ~1~         IsEnabled="False"  @1@ -->
+                    <!--     ~1~         MinWidth="5"  @1@ -->
+                    <!--     ~1~         Padding="2 4.5 2 0" @1@ -->
+                    <!--     ~1~         BorderThickness="1 1 0 1" @1@ -->
+                    <!--     ~1~     /> @1@ -->
+                    <!--     ~1~     <TextBox @1@ -->
+                    <!--     ~1~         Foreground="white" @1@ -->
+                    <!--     ~1~         Background="#171515" @1@ -->
+                    <!--     ~1~         HorizontalAlignment="Stretch" @1@ -->
+                    <!--     ~1~         CornerRadius="0" @1@ -->
+                    <!--     ~1~         CaretBrush="white" @1@ -->
+                    <!--     ~1~         BorderThickness="0 1 1 1" @1@ -->
+                    <!--     ~1~     /> @1@ -->
+                    <!--         ~1~ Text="{Binding CommandLineCommand, Mode=OneWayToSource}" @1@ -->
+                    <!-- -->
+                    <!--     ~1~ </DockPanel> @1@ -->
+                    <!--      -->
+                    <!--     ~1~ <TextBlock  @1@ -->
+                    <!--     ~1~     FontSize="13" @1@ -->
+                    <!--     ~1~     VerticalAlignment="Stretch" @1@ -->
+                    <!--     ~1~     Background="black" @1@ -->
+                    <!--     ~1~     Foreground="white" @1@ -->
+                    <!--     ~1~     DockPanel.Dock="Top" @1@ -->
+                    <!--     ~1~ /> @1@ -->
+                    <!--     <ListBox -->
+                    <!--         VerticalAlignment="Stretch" -->
+                    <!--         Foreground="white" -->
+                    <!--         DockPanel.Dock="Top" -->
+                    <!-- -->
+                    <!--     > -->
+                    <!--         ~1~ Items="{Binding InputOutputCollection}" @1@ -->
+                    <!--         <ListBox.ItemTemplate> -->
+                    <!--             <DataTemplate> -->
+                    <!--                 <Border> -->
+                    <!--                     <TextBlock  -->
+                    <!--                         FontSize="13" HorizontalAlignment="Stretch" -->
+                    <!--                      -->
+                    <!--                     /> -->
+                    <!--                     ~1~ Text="{Binding}" @1@ -->
+                    <!--                 </Border> -->
+                    <!--             </DataTemplate> -->
+                    <!--         </ListBox.ItemTemplate> -->
+                    <!--     </ListBox> -->
+                    <!-- </DockPanel> -->
+                </Border>
+            </SplitView.Pane>
+        </SplitView>
+    </DockPanel>
+</UserControl>

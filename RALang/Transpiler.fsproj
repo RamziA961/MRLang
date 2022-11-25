@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Transpiler</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Lexer\Token.fs" />
+    <Compile Include="Lexer\Lexer.fs" />
+    <Compile Include="Lexer\TokenTranslation.fs" />
+    <Compile Include="AbstractSyntaxTree\AST.fs" />
+    <Compile Include="AbstractSyntaxTree\IdentifierTree.fs" />
+    <Compile Include="AbstractSyntaxTree\ExprTree.fs" />
+    <Compile Include="AbstractSyntaxTree\DeclTree.fs" />
+    <Compile Include="AbstractSyntaxTree\AssignTree.fs" />
+    <Compile Include="AbstractSyntaxTree\tests\ExprTreeUnit.fs" />
+    <Compile Include="Parser\Parser.fs" />
+    <Compile Include="Writer\Write.fs" />
+    <Compile Include="Interface.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit.Console" Version="3.15.2" />
+  </ItemGroup>
+</Project>

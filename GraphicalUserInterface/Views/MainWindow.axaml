@@ -1,0 +1,241 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:GraphicalUserInterface.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="550"
+        x:Class="GraphicalUserInterface.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="RALang Text Editor"
+        Padding="0 0 0 2"
+        Background="Transparent"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+>
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    
+    <!-- Styling and Overriding control templates -->
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="white"/>
+            <Setter Property="FontFamily" Value="Courier New"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Foreground" Value="white"/>
+            <Setter Property="CaretBrush" Value="white"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontFamily" Value="Courier New"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="AcceptsTab" Value="True"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>    
+        <Style Selector="TextBox:pointerover">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ TextBlock">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Foreground" Value="white"/>
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+        <Style Selector="TextBox:focus TextBox">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBox:focus Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="BorderBrush" Value="white"/>
+        </Style>
+        <Style Selector="TextBox:disabled Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        
+        <Style Selector="ToolTip">
+            <Setter Property="Background" Value="transparent"/>
+        </Style>
+
+        <!-- <Style Selector="Button"> -->
+        <!--     <Setter Property="Foreground" Value="white"/> -->
+        <!-- </Style> -->
+        <!-- <Style Selector="Button:focus"> -->
+        <!--     <Setter Property="Foreground" Value="white"/> -->
+        <!-- </Style> -->
+        <!-- <Style Selector="Button:pointerover"> -->
+        <!--     <Setter Property="Foreground" Value="white"/> -->
+        <!-- </Style> -->
+        <!-- <Style Selector="Button:pressed"> -->
+        <!--     <Setter Property="Foreground" Value="white"/> -->
+        <!-- </Style> -->
+        
+        <Style>
+            <Style.Resources>
+                <!-- Icons -->
+                <StreamGeometry x:Key="play_regular">M13.7501344,8.41212026 L38.1671892,21.1169293 C39.7594652,21.9454306 40.3786269,23.9078584 39.5501255,25.5001344 C39.2420737,26.0921715 38.7592263,26.5750189 38.1671892,26.8830707 L13.7501344,39.5878797 C12.1578584,40.4163811 10.1954306,39.7972194 9.36692926,38.2049434 C9.12586301,37.7416442 9,37.2270724 9,36.704809 L9,11.295191 C9,9.50026556 10.4550746,8.045191 12.25,8.045191 C12.6976544,8.045191 13.1396577,8.13766178 13.5485655,8.31589049 L13.7501344,8.41212026 Z M12.5961849,10.629867 L12.4856981,10.5831892 C12.4099075,10.5581 12.3303482,10.545191 12.25,10.545191 C11.8357864,10.545191 11.5,10.8809774 11.5,11.295191 L11.5,36.704809 C11.5,36.8253313 11.5290453,36.9440787 11.584676,37.0509939 C11.7758686,37.4184422 12.2287365,37.5613256 12.5961849,37.370133 L37.0132397,24.665324 C37.1498636,24.5942351 37.2612899,24.4828088 37.3323788,24.3461849 C37.5235714,23.9787365 37.380688,23.5258686 37.0132397,23.334676 L12.5961849,10.629867 Z</StreamGeometry>
+                <StreamGeometry x:Key="layer_regular">M20.0256266,12.1919251 C19.8772338,12.4293536 19.6806426,12.6329794 19.4485757,12.7896246 L13.3986821,16.8733027 C12.5534904,17.4438072 11.4465096,17.4438072 10.6013179,16.8733027 L4.55142428,12.7896246 C3.79043588,12.2759574 3.49533538,11.3303569 3.77229147,10.5 L10.6132495,15.0595795 C11.4005138,15.5844224 12.4112447,15.617225 13.2264422,15.1579876 L13.3867505,15.0595795 L20.2270621,10.4994959 C20.4087649,11.0456562 20.3545192,11.665697 20.0256266,12.1919251 Z M20.2270621,13.7494959 C20.4087649,14.2956562 20.3545192,14.915697 20.0256266,15.4419251 C19.8772338,15.6793536 19.6806426,15.8829794 19.4485757,16.0396246 L13.3986821,20.1233027 C12.5534904,20.6938072 11.4465096,20.6938072 10.6013179,20.1233027 L4.55142428,16.0396246 C3.79043588,15.5259574 3.49533538,14.5803569 3.77229147,13.75 L10.6132495,18.3095795 C11.4005138,18.8344224 12.4112447,18.867225 13.2264422,18.4079876 L13.3867505,18.3095795 L20.2270621,13.7494959 Z M13.3867505,3.42450033 L19.7519246,7.66794971 C20.2114532,7.97430216 20.3356271,8.59517151 20.0292747,9.0547002 C19.9560398,9.16455248 19.8617768,9.25881544 19.7519246,9.33205029 L13.3867505,13.5754997 C12.547002,14.135332 11.452998,14.135332 10.6132495,13.5754997 L4.24807544,9.33205029 C3.78854675,9.02569784 3.66437288,8.40482849 3.97072534,7.9452998 C4.0439602,7.83544752 4.13822315,7.74118456 4.24807544,7.66794971 L10.6132495,3.42450033 C11.452998,2.86466797 12.547002,2.86466797 13.3867505,3.42450033 Z M11.560754,4.60622527 L11.4452998,4.67257577 L5.705,8.5 L11.4452998,12.3274242 C11.7438771,12.5264757 12.1228116,12.5485926 12.439246,12.3937747 L12.5547002,12.3274242 L18.294,8.5 L12.5547002,4.67257577 C12.2561229,4.47352427 11.8771884,4.45140743 11.560754,4.60622527 Z</StreamGeometry>
+                <StreamGeometry x:Key="save_regular">M3 5.75C3 4.23122 4.23122 3 5.75 3H15.7145C16.5764 3 17.4031 3.34241 18.0126 3.9519L20.0481 5.98744C20.6576 6.59693 21 7.42358 21 8.28553V18.25C21 19.7688 19.7688 21 18.25 21H5.75C4.23122 21 3 19.7688 3 18.25V5.75ZM5.75 4.5C5.05964 4.5 4.5 5.05964 4.5 5.75V18.25C4.5 18.9404 5.05964 19.5 5.75 19.5H6V14.25C6 13.0074 7.00736 12 8.25 12H15.75C16.9926 12 18 13.0074 18 14.25V19.5H18.25C18.9404 19.5 19.5 18.9404 19.5 18.25V8.28553C19.5 7.8214 19.3156 7.37629 18.9874 7.0481L16.9519 5.01256C16.6918 4.75246 16.3582 4.58269 16 4.52344V7.25C16 8.49264 14.9926 9.5 13.75 9.5H9.25C8.00736 9.5 7 8.49264 7 7.25V4.5H5.75ZM16.5 19.5V14.25C16.5 13.8358 16.1642 13.5 15.75 13.5H8.25C7.83579 13.5 7.5 13.8358 7.5 14.25V19.5H16.5ZM8.5 4.5V7.25C8.5 7.66421 8.83579 8 9.25 8H13.75C14.1642 8 14.5 7.66421 14.5 7.25V4.5H8.5Z</StreamGeometry>
+                <StreamGeometry x:Key="wrench_regular">M10.5001 7.7514C10.5001 4.57577 13.0745 2.0014 16.2501 2.0014C17.196 2.0014 18.0906 2.23039 18.8794 2.6366C19.0924 2.74625 19.2401 2.95101 19.2771 3.18765C19.314 3.42429 19.2358 3.66435 19.0664 3.83371L16.3006 6.59949L17.3613 7.66015L20.1398 4.8816C20.3081 4.71337 20.5461 4.63494 20.7814 4.67023C21.0167 4.70551 21.2213 4.85033 21.3327 5.06051C21.759 5.86417 22.0001 6.78074 22.0001 7.7514C22.0001 10.927 19.4258 13.5014 16.2501 13.5014C15.7895 13.5014 15.3408 13.4471 14.9104 13.3443L7.54552 20.9632C6.42372 22.1237 4.59212 22.2096 3.36665 21.1592C2.03293 20.016 1.93771 17.9855 3.15859 16.7225L10.6339 8.98943C10.5462 8.59014 10.5001 8.17579 10.5001 7.7514ZM16.2501 3.5014C13.9029 3.5014 12.0001 5.40419 12.0001 7.7514C12.0001 8.18337 12.0643 8.59897 12.1832 8.98991C12.2624 9.25049 12.1942 9.53355 12.0049 9.72937L4.23708 17.765C3.61648 18.407 3.66488 19.4392 4.34283 20.0203C4.96577 20.5542 5.8968 20.5106 6.46704 19.9207L14.1435 11.9795C14.3435 11.7726 14.6443 11.6984 14.9176 11.7885C15.3358 11.9265 15.7834 12.0014 16.2501 12.0014C18.5973 12.0014 20.5001 10.0986 20.5001 7.7514C20.5001 7.40926 20.4598 7.07703 20.3838 6.75896L17.8916 9.25114C17.5987 9.54403 17.1238 9.54403 16.831 9.25114L14.7096 7.12982C14.4167 6.83692 14.4167 6.36205 14.7096 6.06916L17.1763 3.60246C16.8785 3.53632 16.5686 3.5014 16.2501 3.5014Z</StreamGeometry>
+                <StreamGeometry x:Key="link_square_regular">M6.25 3C4.45507 3 3 4.45507 3 6.25V12.25C3 14.0449 4.45507 15.5 6.25 15.5H7.5V14H6.25C5.2835 14 4.5 13.2165 4.5 12.25V6.25C4.5 5.2835 5.2835 4.5 6.25 4.5H12.25C13.2165 4.5 14 5.2835 14 6.25V12.25C14 13.2165 13.2165 14 12.25 14H11V15.5H12.25C14.0449 15.5 15.5 14.0449 15.5 12.25V6.25C15.5 4.45507 14.0449 3 12.25 3H6.25Z M10 11.75C10 10.7835 10.7835 10 11.75 10H12.9982V8.5H11.75C9.95507 8.5 8.5 9.95507 8.5 11.75V17.75C8.5 19.5449 9.95507 21 11.75 21H17.75C19.5449 21 21 19.5449 21 17.75V11.75C21 9.95507 19.5449 8.5 17.75 8.5H16.5V10H17.75C18.7165 10 19.5 10.7835 19.5 11.75V17.75C19.5 18.7165 18.7165 19.5 17.75 19.5H11.75C10.7835 19.5 10 18.7165 10 17.75V11.75Z</StreamGeometry>
+            </Style.Resources>
+        </Style>
+    </Window.Styles>
+    
+    <DockPanel
+        Background="transparent"
+        LastChildFill="True"
+        HorizontalAlignment="Stretch" 
+        VerticalAlignment="Stretch"
+    >
+        <Border DockPanel.Dock="Bottom" Background="transparent" BorderThickness="3 0" Height="200">
+            <TextBlock 
+                Text="{Binding Output, Mode=OneWay}"
+                Background="#171515" 
+                Foreground="white" 
+                VerticalAlignment="Stretch" 
+                HorizontalAlignment="Stretch"
+                Margin="2"
+            />
+        </Border>
+        <DockPanel 
+            DockPanel.Dock="Top"
+            Background="transparent"
+            LastChildFill="True"
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Stretch"
+            Margin="0 25 0 0"
+        >
+            <StackPanel Margin = "3 1" Orientation="Horizontal" Spacing="5" DockPanel.Dock="Top">
+                <Button 
+                    Foreground="white"
+                    x:Name="RunButton"
+                    ToolTip.Tip = "Run Compiled C Program"
+                >
+                    <PathIcon Data="{StaticResource play_regular}"/>
+                </Button>
+                <Button 
+                    Foreground="white"
+                    x:Name="TranspileButton"
+                    ToolTip.Tip="Transpile Algol to C"
+                >
+                    <PathIcon Data="{StaticResource link_square_regular}"/>
+                </Button>
+                <Button 
+                    Foreground="white"
+                    x:Name="BuildButton"
+                    ToolTip.Tip="Compile C Program"
+                >
+                    <PathIcon Data="{StaticResource wrench_regular}"/>
+                </Button>
+            </StackPanel>
+            <SplitView 
+                Background="transparent"
+                PaneBackground="transparent"
+                IsPaneOpen="True" 
+                DockPanel.Dock="Bottom"  
+                DisplayMode="Inline" 
+                OpenPaneLength="600" 
+            >
+                <SplitView.Pane>
+                    <Border BorderThickness="3 0" Background="transparent" >
+                        <DockPanel 
+                            Background="transparent" 
+                            HorizontalAlignment="Stretch" 
+                            VerticalAlignment="Stretch" 
+                            LastChildFill="True"
+                        >
+                            <StackPanel 
+                                DockPanel.Dock="Bottom" 
+                                Background="transparent"
+                                Height="50"
+                                HorizontalAlignment="Stretch"
+                                Orientation="Horizontal"
+                            >
+                                <TextBlock 
+                                    Background="transparent"
+                                    Foreground="white"
+                                    VerticalAlignment="Stretch"
+                                    HorizontalAlignment="Stretch"
+                                    Text="{Binding AlgolDummy, Mode=OneWay}"
+                                />
+                                <Button
+                                    Width="40"
+                                    Height="40"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Right"
+                                    x:Name="SaveAlgolButton"
+                                    ToolTip.Tip="Save Algol Source Code"
+                                >
+                                    <!-- Command="{Binding SaveAlgolSource}" -->
+                                    <PathIcon Data="{StaticResource save_regular}"/>
+                                </Button>
+                            </StackPanel>
+                            
+                            <ScrollViewer VerticalAlignment="Stretch" DockPanel.Dock="Top">
+                                <TextBox
+                                    FontSize="13"
+                                    VerticalAlignment="Stretch"
+                                    Text="{Binding AlgolSource, Mode=OneWayToSource}"
+                                />
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                </SplitView.Pane>
+                
+                <Border BorderThickness="3 0" Background="transparent" >
+                    <DockPanel 
+                        Background="transparent" 
+                        HorizontalAlignment="Stretch" 
+                        VerticalAlignment="Stretch" 
+                        LastChildFill="True"
+                    >
+                        <StackPanel
+                            DockPanel.Dock="Bottom" 
+                            Background="transparent"
+                            Height="50"
+                            HorizontalAlignment="Stretch"
+                            Orientation="Horizontal"
+                        >
+                            <TextBlock 
+                                Background="transparent"
+                                Foreground="white"
+                                VerticalAlignment="Stretch"
+                                HorizontalAlignment="Stretch"
+                                Height="50"
+                                Text="{Binding CDummy, Mode=OneWay}"
+                            />  
+                            <Button
+                                Width="40"
+                                Height="40"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right"
+                                x:Name="SaveCButton"
+                                ToolTip.Tip="Save C Source Code"
+                            >
+                                <!-- Command="{Binding SaveCSource}" -->
+
+                                <PathIcon Data="{StaticResource save_regular}"/>
+                            </Button>
+                        </StackPanel>
+                
+                        <ScrollViewer VerticalAlignment="Stretch" DockPanel.Dock="Top">
+                            <TextBox
+                                VerticalAlignment="Stretch"
+                                Text="{Binding CSource, Mode=TwoWay}"
+                            />
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </SplitView>
+        </DockPanel>
+    </DockPanel>
+</Window>

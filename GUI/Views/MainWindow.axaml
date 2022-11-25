@@ -1,0 +1,57 @@
+<Window 
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="clr-namespace:GUI.Views"
+    mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="550"
+    x:Class="GUI.MainWindow"
+    Title="RALang Editor"
+    Padding="0 0 0 2"
+    Background="Transparent"
+    TransparencyLevelHint="AcrylicBlur"
+    ExtendClientAreaToDecorationsHint="True"
+>
+    <Window.Styles>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#171515"/>
+        </Style> 
+        <Style Selector="TextBox:pointerover /template/ TextBlock">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBox:focus TextBox">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBox:focus Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="BorderBrush" Value="white"/>
+        </Style>
+        <Style Selector="TextBox:disabled Border">
+            <Setter Property="Background" Value="#171515"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        
+        <Style Selector="Button">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+        <Style Selector="Button:focus">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="Foreground" Value="white"/>
+        </Style>
+    </Window.Styles>
+    
+    <views:Main/>
+    
+</Window>
