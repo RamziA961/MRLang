@@ -11,6 +11,9 @@ type Token =
     | I of int | F of float | B of bool | S of string
     | IDENTIFIER of string
     | TYPE of string
+    | CONDITIONAL | CONDITION
+    | IF | ELIF | THEN | ELSE | FI
+    | DO
     | BLOCK
     | MAIN
     | LINE_END
@@ -25,10 +28,14 @@ let ROpTokenMap = Map(seq {
 
 let ParenthesisTokenMap = Map(seq {("(", L_PAR); (")", R_PAR)})
 
+
+let Types : Set<string> = Set(seq {"int"; "real"; "string"; "bool"})
+
 let AssignTokenMap = Map(seq {("=", ASSIGN); (":=", MUTATE)})
 
-let Keywords : Set<string> =  Set(seq {"IF"; "THEN"; "ELIF"; "ELSE"; "FI"})
-let Types : Set<string> = Set(seq {"int"; "real"; "string"; "bool"})
+
+let ConditionalTokenMap = Map(seq{("if", IF); ("elif", ELIF); ("then", THEN); ("else", ELSE); ("fi", FI)})
+
 
 let TBoolean = Set(seq {"true"; "false"})
 

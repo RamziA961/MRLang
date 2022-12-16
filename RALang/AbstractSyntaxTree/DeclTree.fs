@@ -5,8 +5,6 @@ open Transpiler.AbstractSyntaxTree.IdentifierTree
 open Transpiler.Lexer.Token
 
 
-exception UnexpectedToken of string
-
 (*
     BNF
     <type> ::= 'INT' | 'REAL' | 'STRING' | 'BOOL'

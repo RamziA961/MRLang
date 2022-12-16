@@ -16,14 +16,16 @@ let private Filter input: string =
 let private Tokenize (inputString : string) : Token list =
     let MatchToken (input : string) (accumulated : Token list): Token =
         match input with
-        | "T" | "F" ->
-            B (input = "T")
+        | "true" | "false" ->
+            B (input = "true")
         | _ when input.StartsWith "\"" && input.EndsWith "\"" ->
             S input
         | _ when BOpTokenMap.ContainsKey input -> 
             BOpTokenMap.Item input
         | _ when ROpTokenMap.ContainsKey input ->
             ROpTokenMap.Item input
+        | _ when ConditionalTokenMap.ContainsKey input ->
+            ConditionalTokenMap.Item input
         | _ when IsFloat input ->
             F (float input)
         | _ when IsInteger input ->
@@ -65,7 +67,16 @@ let private Tokenize (inputString : string) : Token list =
                     [MatchToken(input[0 .. cursor - 1]) accumulator] @
                     [MatchToken($"{input[cursor]}") accumulator]
                 ) 0 canSplit
-            |' ' | '\n' | ';' when canSplit ->
+            | '\n' | ';' when canSplit ->
+                SliceAndScan (
+                    accumulator @
+                    [MatchToken($"{input[cursor]}") accumulator]
+                ) 0 canSplit
+            | ' ' | '\n' | ';' when canSplit ->
+                // SliceAndScan (
+                //     accumulator @
+                //     [MatchToken($"{input[cursor]}") accumulator]
+                // ) 0 canSplit
                 Scan input[1..] accumulator cursor canSplit
             | ' ' when canSplit ->  
                 // filter out spaces between tokens

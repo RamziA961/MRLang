@@ -33,10 +33,6 @@ let private IsRelOperator(s : string) : bool = ROpTokenMap.ContainsKey s
     <primary> ::= <int> | <float> | <bool> | "(" <expr> ")"
 *)  
 
-exception TokenMatchingError of string
-exception SyntaxError of string
-exception InvalidOperation of string
-    
 let isExpr (accumulatedTokens: Token list) : bool =
     let rec Expression(tokens: Token list) = (Conjunction >> DisjunctionOperation) tokens
     and DisjunctionOperation (tokens : Token list, value: bool) =

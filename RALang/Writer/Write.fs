@@ -32,10 +32,14 @@ let rec private DescendAndConcat(ast: AST) : string =
         | MUL -> AssembleOperation MUL out
         | DIV -> AssembleOperation DIV out
         | EXP -> AssembleOperation EXP out
-        | AND -> AssembleOperation ADD out
+        | AND -> AssembleOperation AND out
         | OR -> AssembleOperation OR out
         | EQ -> AssembleOperation EQ out
         | NEQ -> AssembleOperation NEQ out
+        | GT -> AssembleOperation GT out
+        | GEQ -> AssembleOperation GEQ out
+        | LT -> AssembleOperation LT out
+        | LEQ -> AssembleOperation LEQ out
         | I v -> $"{v}"
         | F v -> $"{v}"
         | B v -> match v with | true -> "1" | false -> "0"

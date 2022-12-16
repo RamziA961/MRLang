@@ -2,10 +2,9 @@ module Transpiler.AbstractSyntaxTree.AssignTree
 
 open Transpiler.AbstractSyntaxTree.AbstractSyntaxTree
 open Transpiler.Lexer.Token
-
-open ExprTree
-open DeclTree
-open IdentifierTree
+open Transpiler.AbstractSyntaxTree.ExprTree
+open Transpiler.AbstractSyntaxTree.DeclTree
+open Transpiler.AbstractSyntaxTree.IdentifierTree
 
 (*
     <decl> := <type><identifier>

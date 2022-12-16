@@ -29,6 +29,8 @@ let private Expect (tokenList: string list) (token : string) =
 let Parse (tokens: Token list) : AST =
     printf $"Initial: %A{tokens}\n"
     
+    let SymbolMap = Set.empty<string>;
+    
     let rec FindSplit (tokens: Token list) (cursor : int) : int =
         match tokens with
         | LINE_END :: _ ->
@@ -50,6 +52,7 @@ let Parse (tokens: Token list) : AST =
             | _ when isExpr line ->
                 Execute tokens[split + 1..] { ast with children = ast.children @ [Expr line] }
             | _ when isDecl line ->
+                //should test for re-declarations
                 Execute tokens[split + 1..] { ast with children = ast.children @ [Decl line] }
             | _ when isAssign line ->
                 Execute tokens[split + 1..] { ast with children = ast.children @ [Assign line] }
