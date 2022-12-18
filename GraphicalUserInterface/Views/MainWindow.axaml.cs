@@ -44,6 +44,18 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
                 vm => vm.SaveCSource,
                 v => v.SaveCButton
             ).DisposeWith(disposables);
+
+            this.BindCommand(
+                ViewModel,
+                vm => vm.LoadAlgolSource,
+                v => v.LoadAlgolButton
+            ).DisposeWith(disposables);
+            
+            this.BindCommand(
+                ViewModel,
+                vm => vm.LoadCSource,
+                v => v.LoadCButton
+            ).DisposeWith(disposables);
         });
         // this.Weh
 

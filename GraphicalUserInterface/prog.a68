@@ -1,0 +1,14 @@
+int x = 0;
+
+if x == 0 then
+	x := x + 1;
+	if x == 1 then
+		x := x + 1;
+	fi
+elif x == 1 then
+	x := x + 2;
+else
+	x := x + 3;
+fi
+
+int y = 0;

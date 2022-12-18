@@ -29,25 +29,30 @@ let isDecl (tokens : Token list) : bool =
         snd(Decl tokens)
     else
         false
-    
-    
+     
 
-let private TypeDecl(tokens: Token list) : AST =
+let private TypeDecl(tokens: Token list) : Token list * AST =
     match tokens with
-    | TYPE t :: _ -> {
+    | TYPE t :: tail -> (tail, {
             decoration = "TypeTree"
             token = TYPE t
             children = []
-        }
-    | _ -> raise(UnexpectedToken "Unexpected token encountered.")
+        })
+    | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected TYPE.")
         
-let private IdentifierDecl (tokens: Token list) =
+let private IdentifierDecl (tokens: Token list) : Token list * AST =
     match tokens with
-    | IDENTIFIER id :: _ -> Identifier (IDENTIFIER id)
-    | _ -> raise(UnexpectedToken "Unexpected token encountered.")
+    | IDENTIFIER _ :: _ ->
+        let remTokens, id = Identifier tokens
+        (remTokens, id)
+    | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IDENTIFIER.")
 
-let Decl (tokens : Token list) : AST = {
-    decoration = "DeclTree"
-    token = DECLARATION
-    children = [TypeDecl tokens; IdentifierDecl tokens[1..]]
-}
+let Decl (tokens : Token list) : Token list * AST =
+    let tyRem, tyAST = TypeDecl tokens
+    let idRem, idAST = IdentifierDecl tyRem
+    
+    (idRem, {
+        decoration = "DeclTree"
+        token = DECLARATION
+        children = [tyAST;  idAST]
+    })

@@ -28,33 +28,31 @@ let isAssign (tokens : Token list) : bool =
         && isExpr tokens[2..]   
     | _ -> false
             
-        
-        
-let Assign (tokens: Token list) : AST =
-    
-    let Assignment (ast : AST, tokens : Token list) = 
+           
+let Assign (tokens: Token list) : Token list * AST =
+    let Assignment (tokens : Token list, ast : AST) = 
         match tokens with
         | ASSIGN :: tail ->
-            {
-                children = [ast; Expr tail]
+            let remTokens, expr = Expr tail
+            (remTokens, {
+                children = [ast; expr]
                 decoration = "AssignTree"
                 token = tokens.Head
-            }
+            })
         | MUTATE :: tail ->
-            {
-                children = [ast; Expr tail]
+            let remTokens, expr = Expr tail
+            (remTokens, {
+                children = [ast; expr]
                 decoration = "MutateTree"
                 token = tokens.Head
-            }
-        | _ -> raise(UnexpectedToken "Unexpected token encountered.")
+            })
+        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected ASSIGN or MUTATE.")
     
-    let NonTerminal (tokens: Token list) =
+    let NonTerminal (tokens: Token list) : Token list * AST =
         match tokens with
-        | TYPE _ :: _ ->
-            (Decl tokens[0..2], tokens[2..])
-        | IDENTIFIER _ :: _ ->
-            (Identifier tokens[0], tokens[1..])
-        | _ -> raise(UnexpectedToken "Unexpected token encountered.")
+        | TYPE _ :: _ -> Decl tokens
+        | IDENTIFIER _ :: _ -> Identifier tokens
+        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected TYPE or IDENTIFIER.")
      
     (NonTerminal >> Assignment) tokens
     

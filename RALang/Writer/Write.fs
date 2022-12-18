@@ -15,13 +15,35 @@ let private AssembleOperation = fun (token : Token) -> fun (children: string lis
         $" {KeywordMap.Item(token)} " +
         (children[(children.Length / 2)..] |> String.concat " ")
 
-let rec private DescendAndConcat(ast: AST) : string =
-        let out = [for child in ast.children do yield DescendAndConcat child] 
+let rec private DescendAndConcat(ast: AST) (depth: int): string =
+        let out = [
+            for child in ast.children do
+                match ast.token with
+                | BLOCK -> yield DescendAndConcat child (depth + 1)
+                | _ -> yield DescendAndConcat child depth
+        ] 
         match ast.token with
         | MAIN ->
             [(KeywordMap.Item MAIN); (out |> String.concat "")] |> String.concat ""
         | BLOCK ->
-            "{\n" + ([for s in out do yield s + ";\n"] |> String.concat "") + "}"
+            "{\n" + (
+                [
+                    for s in out do
+                        yield (String.replicate depth "\t") + s + ";\n"
+                ] |> String.concat "") +
+            (String.replicate (depth - 1) "\t") + "}"
+        | CONDITIONAL ->
+            String.concat "\n" out
+        | IF ->
+            "if (" + out[0] + ") " + out[1]
+        | ELIF ->
+            (String.replicate (depth - 1) "\t") + "else if (" + out[0] + ") " + out[1]
+        | ELSE ->
+            (String.replicate (depth - 1) "\t") + "else " + out[0]
+        | LOOP ->
+            String.concat "\n" out
+        | WHILE ->
+            "while (" + out[0] + ") " + out[1]
         | DECLARATION -> out |> String.concat " "
         | ASSIGN -> AssembleOperation ASSIGN out
         | MUTATE -> AssembleOperation MUTATE out
@@ -48,4 +70,4 @@ let rec private DescendAndConcat(ast: AST) : string =
         | R_PAR -> ")"
 
 let GenerateSourceCode(ast: AST) : string =
-    DescendAndConcat ast
+    DescendAndConcat ast 1
