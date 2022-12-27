@@ -33,23 +33,15 @@ let rec Statement (tokens: Token list) : Token list * AST =
 and Block (tokens: Token list) : Token list * AST =
     let rec Accumulate (remaining: Token list) (accumulator: AST list) =
         match remaining with
-        | [] -> remaining, accumulator
+        | [] | (OD | ELIF | ELSE | FI | END) :: _ -> remaining, accumulator
         | LINE_END :: tail -> Accumulate tail accumulator
         | WHILE :: _ ->
             let remTokens, loopAST = Loop remaining
             Accumulate remTokens (accumulator @ [loopAST])
-        | OD :: _ ->
-            remaining, accumulator
-        | IF  :: _ ->
+        | IF :: _ ->
             let remTokens, condAST = Conditional remaining
             Accumulate remTokens (accumulator @ [condAST])
-        | ELIF :: _ ->
-            remaining, accumulator
-        | ELSE :: _ ->
-            remaining, accumulator
-        | FI :: _ ->
-            remaining, accumulator
-        | ( TYPE _ | IDENTIFIER _ ) :: _ -> 
+        | (TYPE _ | IDENTIFIER _) :: _ -> 
             let remTokens, statementAST = Statement remaining     
             Accumulate remTokens (accumulator @ [statementAST])
         | _ -> remaining, accumulator
@@ -79,7 +71,7 @@ and Conditional (tokens: Token list) : Token list * AST =
                 | ELSE :: _ -> Accumulate ifBlockRem (accumulator @ [ifAST])
                 | FI :: tail -> tail, [ifAST]
                 | _ ->  raise (
-                        UnexpectedToken $"Unexpected token encountered: {ifBlockRem[0]}. Expected FI, ELIF, ELSE."
+                        UnexpectedToken $"Unexpected token encountered: {ifBlockRem[0]}. Expected FI, ELIF, or ELSE."
                     )
             | _ -> raise (UnexpectedToken $"Unexpected token encountered: {ifCondRem[0]}. Expected THEN.")
         | ELSE :: tail ->
@@ -92,6 +84,7 @@ and Conditional (tokens: Token list) : Token list * AST =
                     children = [elseBlockAST]
                 }])
             | _ -> raise (UnexpectedToken $"Unexpected token encountered: {elseBlockRem[0]}. Expected FI.")
+        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IF, FI, ELIF, or ELSE.")
     match tokens with
     | IF :: _ ->
         let remTokens, asts =  Accumulate tokens []

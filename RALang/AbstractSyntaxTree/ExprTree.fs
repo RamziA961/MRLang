@@ -4,9 +4,6 @@ open Transpiler.AbstractSyntaxTree.AbstractSyntaxTree
 open Transpiler.AbstractSyntaxTree.IdentifierTree
 open Transpiler.Lexer.Token
 
-let private IsBinaryOperator (s: string) : bool = BOpTokenMap.ContainsKey s
-let private IsRelOperator(s : string) : bool = ROpTokenMap.ContainsKey s
-
 (*
     BNF
     <expr> ::= <conjunction> {<disjunctionOp>}
@@ -86,6 +83,9 @@ let isExpr (accumulatedTokens: Token list) : bool =
     and Primary (tokens: Token list) : Token list * bool =
         match tokens with
         | [] -> (tokens, false)
+        | NOT :: tail ->
+            let remTokens, primary = Primary tail
+            (remTokens, primary)
         | IDENTIFIER _ :: tail -> (tail, true)
         | B _ :: tail -> (tail, true)
         | I _ :: tail -> (tail, true)
@@ -97,12 +97,7 @@ let isExpr (accumulatedTokens: Token list) : bool =
             | _ -> (tail, false)
         | LINE_END :: tail -> (tail, true)
         | _ :: tail -> (tail, false)
-    
-    // if accumulatedTokens.IsEmpty then
-    //     false
-    // else
-    //     let tokens, status = Expression accumulatedTokens
-    //     tokens.IsEmpty && status
+   
     snd (Expression accumulatedTokens) 
             
     
@@ -228,6 +223,13 @@ let Expr(accumulatedTokens : Token list) : Token list * AST =
         | _ -> (tokens, ast)
     and Primary (tokens: Token list) : Token list * AST =
         match tokens with
+        | NOT :: tail ->
+            let remTokens, primary = Primary tail
+            (remTokens, {
+                token = NOT
+                decoration = "NotTree"
+                children = [primary]
+            })
         | IDENTIFIER _ :: _ ->
              Identifier tokens
         | B b :: tail ->
@@ -256,10 +258,11 @@ let Expr(accumulatedTokens : Token list) : Token list * AST =
                         value with children =
                                     [{children = []; token = L_PAR; decoration = "ParenthesisTree"}] @
                                     value.children @
-                                    [{children = []; token = R_PAR ;decoration = "ParenthesisTree"}]
+                                    [{children = []; token = R_PAR; decoration = "ParenthesisTree"}]
                    })
             | _ -> raise (TokenMatchingError "Mismatched number of parentheses encountered.")
-        
+        | _ -> raise (SyntaxError ("Syntax error encountered. Expected Primitive, L_PAR, R_PAR, or NOT." +
+                      $"\nTOKEN DUMP: %A{tokens}."))
     Expression accumulatedTokens
             
             

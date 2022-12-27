@@ -1,14 +1,14 @@
-int x = 0;
+proc hello = (int y, int z) int:
+begin
+	int i = 0;
+end
 
-if x == 0 then
-	x := x + 1;
-	if x == 1 then
-		x := x + 1;
+proc main = () int:
+begin
+	int i := 99;
+	int j := 99;
+	if i == j then
+		j := j + i;
+		i := i + i + j + 300;
 	fi
-elif x == 1 then
-	x := x + 2;
-else
-	x := x + 3;
-fi
-
-int y = 0;
+end

@@ -19,13 +19,13 @@ let isAssign (tokens : Token list) : bool =
             | ASSIGN | MUTATE ->
                 true
             | _ -> false
-        && isExpr tokens[3..]
+        && (isExpr tokens[3..] || match tokens[3..] with S _ :: _ -> true | _ -> false)
     | IDENTIFIER _ :: _ ->
         match tokens[1] with
         | MUTATE ->
             true
         | _ -> false
-        && isExpr tokens[2..]   
+        && (isExpr tokens[2..] || match tokens[3..] with S _ :: _ -> true | _ -> false)
     | _ -> false
             
            
@@ -33,14 +33,20 @@ let Assign (tokens: Token list) : Token list * AST =
     let Assignment (tokens : Token list, ast : AST) = 
         match tokens with
         | ASSIGN :: tail ->
-            let remTokens, expr = Expr tail
+            let remTokens, expr =
+                match tail with
+                | S s :: tail -> tail, { token = S s; children = []; decoration = "charTree" } 
+                | _ -> Expr tail
             (remTokens, {
                 children = [ast; expr]
                 decoration = "AssignTree"
                 token = tokens.Head
             })
         | MUTATE :: tail ->
-            let remTokens, expr = Expr tail
+            let remTokens, expr =
+                match tail with
+                | S s :: tail -> tail, { token = S s; children = []; decoration = "charTree" } 
+                | _ -> Expr tail
             (remTokens, {
                 children = [ast; expr]
                 decoration = "MutateTree"

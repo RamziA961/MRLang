@@ -4,9 +4,7 @@ open Transpiler.Lexer.Token
 
 open Transpiler.AbstractSyntaxTree.AbstractSyntaxTree
 open Transpiler.AbstractSyntaxTree.BlockTree
-open Transpiler.AbstractSyntaxTree.ExprTree
-open Transpiler.AbstractSyntaxTree.DeclTree
-open Transpiler.AbstractSyntaxTree.AssignTree
+open Transpiler.AbstractSyntaxTree.FuncTree
 
 
 // exception UnsupportedKeywordError of string
@@ -65,13 +63,21 @@ let private Expect (tokenList: string list) (token : string) =
 //     }]; decoration = "Main" }
 
 
-let rec Parse (tokens: Token list) : AST =
+let Parse (tokens: Token list) : AST =
     let SymbolMap = Set.empty
     
-    {
-        token = MAIN
-        decoration = "MAIN"
-        children = [snd (Block tokens)]
-    }
+    // {
+    //     token = MAIN
+    //     decoration = "MAIN"
+    //     children = [snd (Block tokens)]
+    // }
     
+    let rec ConstructProgramTree (tokens: Token list) (ast: AST) : Token list * AST =
+        match tokens with
+        | LINE_END :: tail -> ConstructProgramTree tail ast
+        | PROC :: _ ->
+            let rem, funcTree = Func tokens
+            ConstructProgramTree rem { ast with children = ast.children @ [ funcTree ] }
+        | [] -> tokens, ast
     
+    snd (ConstructProgramTree tokens { token = PROGRAM; decoration = "ProgramTree"; children = [] })

@@ -14,6 +14,7 @@
     <Compile Include="AbstractSyntaxTree\DeclTree.fs" />
     <Compile Include="AbstractSyntaxTree\AssignTree.fs" />
     <Compile Include="AbstractSyntaxTree\BlockTree.fs" />
+    <Compile Include="AbstractSyntaxTree\FuncTree.fs" />
     <Compile Include="AbstractSyntaxTree\tests\ExprTreeUnit.fs" />
     <Compile Include="Parser\Parser.fs" />
     <Compile Include="Writer\Write.fs" />

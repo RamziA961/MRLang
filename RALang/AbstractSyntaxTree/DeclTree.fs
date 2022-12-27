@@ -31,7 +31,7 @@ let isDecl (tokens : Token list) : bool =
         false
      
 
-let private TypeDecl(tokens: Token list) : Token list * AST =
+let TypeDecl(tokens: Token list) : Token list * AST =
     match tokens with
     | TYPE t :: tail -> (tail, {
             decoration = "TypeTree"
@@ -42,9 +42,7 @@ let private TypeDecl(tokens: Token list) : Token list * AST =
         
 let private IdentifierDecl (tokens: Token list) : Token list * AST =
     match tokens with
-    | IDENTIFIER _ :: _ ->
-        let remTokens, id = Identifier tokens
-        (remTokens, id)
+    | IDENTIFIER _ :: _ -> Identifier tokens
     | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IDENTIFIER.")
 
 let Decl (tokens : Token list) : Token list * AST =
@@ -53,6 +51,6 @@ let Decl (tokens : Token list) : Token list * AST =
     
     (idRem, {
         decoration = "DeclTree"
-        token = DECLARATION
+        token = DECLARE
         children = [tyAST;  idAST]
     })

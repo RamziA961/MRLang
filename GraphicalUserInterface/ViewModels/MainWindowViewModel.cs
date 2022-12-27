@@ -17,28 +17,14 @@ public class MainWindowViewModel : ViewModelBase
     
     public MainWindowViewModel()
     {
-        // this.WhenPropertyChanged(o => o.AlgolSource, notifyOnInitialValue: false)
-        //     .Subscribe(_ => this.RaisePropertyChanged(nameof(AlgolDummy)));
-        //
-        // this.WhenPropertyChanged(o => o.CSource, notifyOnInitialValue: false)
-        //     .Subscribe(_ => this.RaisePropertyChanged(nameof(CDummy)));
-        
         BuildCommand = ReactiveCommand.Create(CompileC);
         RunCommand = ReactiveCommand.Create(RunC);
         TranspileCommand = ReactiveCommand.Create(TranspileAlgol);
         
         LoadAlgolSource = ReactiveCommand.Create(LoadAlgol);
-        LoadCSource = ReactiveCommand.Create(LoadC);
-
         
-        SaveCSource = ReactiveCommand.Create(() =>
-        {
-            var path = $"{Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName}/prog.c";
-            File.WriteAllText(path, _cSource);
-
-            Output = $"C source code successfully saved at {path}";
-        });
-        // SaveCSource.BindTo(this, o => o.Output);
+        LoadCSource = ReactiveCommand.Create(LoadC);
+        SaveCSource = ReactiveCommand.Create(SaveC);
         
         SaveAlgolSource = ReactiveCommand.Create(() =>
         {
@@ -47,7 +33,6 @@ public class MainWindowViewModel : ViewModelBase
             
             Output = $"Algol source code successfully saved at {path}";
         });
-        // SaveAlgolSource.BindTo(this, o => o.Output);
     }
     
     public ReactiveCommand<Unit, Unit> RunCommand { get; }
@@ -100,6 +85,9 @@ public class MainWindowViewModel : ViewModelBase
     private void CompileC()
     {
         var path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+
+        SaveC();
+        
         var startInfo = new ProcessStartInfo
         {
             FileName = "gcc",
@@ -118,13 +106,13 @@ public class MainWindowViewModel : ViewModelBase
         };
             
         proc.Exited += delegate(object? _, EventArgs _) {  
-            var output = !proc.StandardOutput.EndOfStream ? proc.StandardOutput.ReadToEnd() :  "";
+            var output =  
+                (!proc.StandardOutput.EndOfStream ? proc.StandardOutput.ReadToEnd() : "") +
+                $"C source code has been successfully compiled and saved at {path}.";
+            
             var error = !proc.StandardError.EndOfStream ? proc.StandardError.ReadToEnd() : "";
 
-            Output = string.IsNullOrWhiteSpace(output) ? error : output;
-            
-            Output = string.IsNullOrWhiteSpace(Output) ? 
-                $"C source code has been successfully compiled and saved at {path}." : Output;
+            Output += "\n" + (string.IsNullOrWhiteSpace(error) ? output : error);
         };
 
         proc.Start();
@@ -189,7 +177,7 @@ public class MainWindowViewModel : ViewModelBase
             var error = !proc.StandardError.EndOfStream ? proc.StandardError.ReadToEnd() : "";
 
             AlgolSource = String.IsNullOrWhiteSpace(error) ? output : AlgolSource;
-            Output = String.IsNullOrWhiteSpace(error) ? "Algol source code loaded successfully" : error;
+            Output = String.IsNullOrWhiteSpace(error) ? "Algol source code loaded successfully." : error;
         };
 
         proc.Start();
@@ -221,10 +209,18 @@ public class MainWindowViewModel : ViewModelBase
             var error = !proc.StandardError.EndOfStream ? proc.StandardError.ReadToEnd() : "";
 
             CSource = String.IsNullOrWhiteSpace(error) ? output : AlgolSource;
-            Output = String.IsNullOrWhiteSpace(error) ? "C source code loaded successfully" : error;
+            Output = String.IsNullOrWhiteSpace(error) ? "C source code loaded successfully." : error;
         };
 
         proc.Start();
+    }
+
+    private void SaveC()
+    {
+        var path = $"{Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName}/prog.c";
+        File.WriteAllText(path, _cSource);
+
+        Output = $"C source code successfully saved at {path}";
     }
     
 }
