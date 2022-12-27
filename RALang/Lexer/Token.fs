@@ -13,8 +13,8 @@ type Token =
     | CONDITIONAL | IF | ELIF | THEN | ELSE | FI
     | LOOP | WHILE | DO | OD
     | BLOCK
-    | PROC | ARGS | BEGIN | END
-    | MAIN | PROGRAM
+    | PROC | ARGS | BEGIN | END | PROC_CALL
+    | PROGRAM
     | COLON | SEP | LINE_END
 
 let ReservedKeyword = Set(seq {

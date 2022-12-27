@@ -10,7 +10,7 @@ exception UnsupportedKeywordError of string
 
 let private (|Digit|_|) (c : char) = if List.contains c ['0'..'9'] then Some(c) else None
         
-let private (|DigitNoZero|_|) (c : char) = if List.contains c ['1'..'9'] then Some(c) else None
+let private (|NonZeroDigit|_|) (c : char) = if List.contains c ['1'..'9'] then Some(c) else None
     
 let private (|Letter|_|) (c: char) = if Char.IsLetter c then Some(c) else None
 
