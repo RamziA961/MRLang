@@ -1,117 +1,155 @@
 module Transpiler.AbstractSyntaxTree.BlockTree
 
+open Transpiler.Lexer.Token
+
 open Transpiler.AbstractSyntaxTree.AbstractSyntaxTree
 open Transpiler.AbstractSyntaxTree.AssignTree
 open Transpiler.AbstractSyntaxTree.DeclTree
 open Transpiler.AbstractSyntaxTree.ExprTree
-open Transpiler.Lexer.Token
+open Transpiler.AbstractSyntaxTree.FuncCallTree
 
 (*
     <statement> ::= <assign> | <decl>
     <condition> ::= <expr>
     
-    <block> ::= (<statement>|<conditional>){<block>} 
+    <block> ::= (<statement>|<conditional>|<function_call>){<block>} 
 
     <if-clause> ::= 'if' <condition> 'then' <block>
     <elif-clause> ::= 'elif' <condition> 'then' <block>
     <else-clause> ::= 'else' <block>
     
     <conditional> ::= <if-clause>{<elif-clause>}{<else-clause>}'fi'
+    
+    <while> ::= 'while' <condition> 'do' <block> 'od'
 *)
 
-let isStatement (accumulated: Token list) = isAssign accumulated || isDecl accumulated
-
-let rec Statement (tokens: Token list) : Token list * AST =
+/// <summary>
+/// Attempts to create either a Declaration or Assigment AST depending on input.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed tokens and an AST or None.</returns>
+let rec Statement (tokens: Token list) : Token list * AST option =
     match tokens with
-    | _ when isDecl tokens -> Decl tokens 
-    | _ when isAssign tokens -> Assign tokens
-    | _ ->
-        raise (UnexpectedToken (
-            $"Unexpected token encountered: {tokens[0]}. Expected ASSIGNMENT or DECLARATION.\n\n" +
-            $"TOKEN DUMP:\n%A{tokens}"
-        ))
-and Block (tokens: Token list) : Token list * AST =
+    | Declaration _ ->
+        match Decl tokens with
+        | rem, Some ast -> rem, Some ast 
+        | _ -> tokens, None // propagate None upwards.
+    | Assignment _ ->
+        match Assign tokens with
+        | rem, Some ast -> rem, Some ast
+        | _ -> tokens, None // propagate None upwards.
+    | _ -> tokens, None // propagate None upwards.
+/// <summary>
+/// A function that attempts create a Block AST. A Block AST can consist of loops, conditional, and statements.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed tokens and a Block AST or None.</returns>
+and Block (tokens: Token list) : Token list * AST option =
     let rec Accumulate (remaining: Token list) (accumulator: AST list) =
         match remaining with
-        | [] | (OD | ELIF | ELSE | FI | END) :: _ -> remaining, accumulator
+        | [] | (OD | ELIF | ELSE | FI | END) :: _ -> remaining, Some accumulator // terminators
         | LINE_END :: tail -> Accumulate tail accumulator
         | WHILE :: _ ->
-            let remTokens, loopAST = Loop remaining
-            Accumulate remTokens (accumulator @ [loopAST])
+            match Loop remaining with
+            | rem, Some ast -> Accumulate rem (accumulator @ [ast])
+            | _ -> remaining, None // propagate None upwards.
         | IF :: _ ->
-            let remTokens, condAST = Conditional remaining
-            Accumulate remTokens (accumulator @ [condAST])
-        | (TYPE _ | IDENTIFIER _) :: _ -> 
-            let remTokens, statementAST = Statement remaining     
-            Accumulate remTokens (accumulator @ [statementAST])
-        | _ -> remaining, accumulator
-            
-    let remTokens, children = Accumulate tokens []   
-    remTokens, {
-        token = BLOCK
-        decoration = "BlockTree"
-        children = children
-    }
-and Conditional (tokens: Token list) : Token list * AST =
-    let rec Accumulate (tokens: Token list) (accumulator : AST list): Token list * AST list =
+            match Conditional remaining with
+            | rem, Some ast -> Accumulate rem (accumulator @ [ast])
+            | _ -> remaining, None // propagate None upwards.
+        | IDENTIFIER _ :: L_PAR :: _ ->
+            match FuncCall remaining with
+            | rem, Some ast -> Accumulate rem (accumulator @ [ast])
+            | _ -> remaining, None // propagate None upwards.
+        | Declaration _ | Assignment _ -> 
+            match Statement remaining with
+            | rem, Some ast -> Accumulate rem (accumulator @ [ast])
+            | _ -> remaining, None // propagate None upwards.
+        | _ -> remaining, Some accumulator
+    
+    // accumulate children and construct block ast
+    match Accumulate tokens [] with
+    | rem, Some children -> rem, Some {
+            token = BLOCK
+            decoration = "BlockTree"
+            children = children
+        }
+    | _ -> tokens, None // propagate None upwards.
+/// <summary>
+/// A function that attempts to create a Conditional AST.
+/// A Conditional AST consists of a Condition AST and Block AST.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed tokens and a Conditional AST or None.</returns>
+and Conditional (tokens: Token list) : Token list * AST option =
+    let rec Accumulate (tokens: Token list) (accumulator : AST list): Token list * AST list option =
         match tokens with
-        | (IF | ELIF) :: tail ->
-            let ifCondRem, ifCondAST = Expr tail
-            match ifCondRem with
-            | THEN :: tail ->
-                let ifBlockRem, ifBlockAST = Block tail
-                let ifAST = {
-                    token = tokens[0]
-                    decoration = $"""{match tokens[0] with IF -> "If" | ELIF -> "Elif"}Tree"""
-                    children = [ifCondAST; ifBlockAST]
-                }
-                
-                match ifBlockRem with
-                | ELIF :: _ -> Accumulate ifBlockRem (accumulator @ [ifAST])
-                | ELSE :: _ -> Accumulate ifBlockRem (accumulator @ [ifAST])
-                | FI :: tail -> tail, [ifAST]
-                | _ ->  raise (
-                        UnexpectedToken $"Unexpected token encountered: {ifBlockRem[0]}. Expected FI, ELIF, or ELSE."
-                    )
-            | _ -> raise (UnexpectedToken $"Unexpected token encountered: {ifCondRem[0]}. Expected THEN.")
+        | IF | ELIF as tok :: tail ->
+            // match condition which is an expression
+            match Expr tail with
+            | THEN :: tail, Some ifCondAST ->
+                // condition followed by block and some terminator.
+                match Block tail with
+                | (ELIF | ELSE) :: _ as ifBlockRem, Some ifBlockAST ->
+                     // construct if/elif ast and continue accumulating conditionals
+                     Accumulate ifBlockRem (accumulator @ [{
+                        token = tok
+                        decoration = $"""{match tok with IF -> "If" | ELIF -> "Elif"}Tree"""
+                        children = [ifCondAST; ifBlockAST]
+                     }])
+                | FI :: tail, Some ifBlockAST ->
+                    // construct if/elif ast and stop accumulation
+                    tail, Some [{
+                        token = tok
+                        decoration = $"""{match tok with IF -> "If" | ELIF -> "Elif"}Tree"""
+                        children = [ifCondAST; ifBlockAST]
+                     }]
+                | _ -> tokens, None // propagate None upwards
+            | _ -> tokens, None // propagate None upwards
         | ELSE :: tail ->
-            let elseBlockRem, elseBlockAST = Block tail
-            match elseBlockRem with
-            | FI :: tail ->
-                tail, (accumulator @ [{
-                    token = tokens[0]
-                    decoration = "elseTree"
+            match Block tail with
+            | FI :: tail, Some elseBlockAST ->
+                // construct else ast and stop accumulation
+                tail, Some (accumulator @ [{
+                    token = ELSE
+                    decoration = "ElseTree"
                     children = [elseBlockAST]
                 }])
-            | _ -> raise (UnexpectedToken $"Unexpected token encountered: {elseBlockRem[0]}. Expected FI.")
-        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IF, FI, ELIF, or ELSE.")
-    match tokens with
-    | IF :: _ ->
-        let remTokens, asts =  Accumulate tokens []
-        remTokens, {
+            | _ -> tokens, None // propagate None upwards
+        | _ -> tokens, None // propagate None upwards
+    
+    // accumulate children and construct conditional ast
+    match Accumulate tokens [] with
+    | rem, Some accum -> rem, Some {
             token = CONDITIONAL
-            decoration = "conditionalTree"
-            children = asts
+            decoration = "ConditionalTree"
+            children = accum
         }
-    | _ -> raise (UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IF.")
-and Loop (tokens: Token list) : Token list * AST =
+    | _ -> tokens, None // propagate None upwards.
+
+/// <summary>
+/// A function that attempts to create a Loop AST.
+/// A Loop AST consists of a Condition AST and Block AST.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed tokens and a Loop AST or None.</returns>
+and Loop (tokens: Token list) : Token list * AST option =
     match tokens with
     | WHILE :: tail ->
-        let condRem, condAST = Expr tail
-        match condRem with
-        | DO :: tail ->
-            let blockRem, blockAST = Block tail
-            match blockRem with
-            | OD :: tail ->
-                tail, {
-                    token = LOOP
-                    decoration = "loopTree"
-                    children = [{
-                        token = WHILE
-                        decoration = "whileTree"
-                        children = [condAST; blockAST]
-                    }]
-                }
-            | _ -> raise (UnexpectedToken $"Unexpected token encountered: {blockRem[0]}. Expected OD.")
-        | _ -> raise (UnexpectedToken $"Unexpected token encountered: {condRem[0]}. Expected DO.")
-    | _ ->  raise (UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected WHILE.")
+        // match condition which is an expression
+        match Expr tail with
+        | DO :: tail, Some condAST ->
+            // condition followed by block and OD terminator
+            match Block tail with
+            | OD :: tail, Some blockAST -> tail, Some {
+                     token = LOOP
+                     decoration = "LoopTree"
+                     children = [{
+                         token = WHILE
+                         decoration = "WhileTree"
+                         children = [condAST; blockAST]
+                     }]
+                 }
+            | _ -> tokens, None // propagate None upwards.
+        | _ -> tokens, None // propagate None upwards.
+    | _ -> tokens, None // propagate None upwards.

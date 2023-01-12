@@ -10,8 +10,20 @@ open Transpiler.Lexer.Token
     <type> ::= 'INT' | 'REAL' | 'STRING' | 'BOOL'
     <identifier> ::= <char>{"_" | <identifier>}
     <decl> ::= <type> <identifier>';'
-*)  
-        
+*)
+
+/// <summary>
+/// Active pattern for declaration matching.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Some if first elements of list are a valid declaration, otherwise None.</returns>
+/// <remarks>Does not match assignment operations.</remarks>
+let (|Declaration|_|) (tokens: Token list) =
+    match tokens with
+    | TYPE _ :: IDENTIFIER _ :: (ASSIGN | MUTATE) :: _ -> None
+    | TYPE _ :: IDENTIFIER _ :: _ -> Some(tokens)
+    | _ -> None    
+       
 let isDecl (tokens : Token list) : bool =
     let rec Decl(tokens: Token list) = (TypeDecl >> IdentifierDecl) tokens
     and TypeDecl(tokens: Token list) =
@@ -31,26 +43,43 @@ let isDecl (tokens : Token list) : bool =
         false
      
 
-let TypeDecl(tokens: Token list) : Token list * AST =
+/// <summary>
+/// Attempts to create a Type AST from the head of a token list.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed token list and Type AST or None.</returns>
+let TypeDecl(tokens: Token list) : Token list * AST option =
     match tokens with
-    | TYPE t :: tail -> (tail, {
+    | TYPE t :: tail -> (tail, Some {
             decoration = "TypeTree"
             token = TYPE t
             children = []
         })
-    | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected TYPE.")
-        
-let private IdentifierDecl (tokens: Token list) : Token list * AST =
+    | _ -> tokens, None // propagate None upwards
+
+/// <summary>
+/// Attempts to create an Identifier AST from the Token head.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed token list and an Identifier AST or None.</returns>
+let private IdentifierDecl (tokens: Token list) : Token list * AST option =
     match tokens with
     | IDENTIFIER _ :: _ -> Identifier tokens
-    | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected IDENTIFIER.")
+    | _ -> tokens, None // propagate None upwards
 
-let Decl (tokens : Token list) : Token list * AST =
-    let tyRem, tyAST = TypeDecl tokens
-    let idRem, idAST = IdentifierDecl tyRem
+/// <summary>
+/// Attempts to create a Declaration AST composed of a Type AST and Identifier AST.
+/// </summary>
+/// <param name="tokens"> A token list.</param>
+/// <returns>Unparsed token list and a Declaration AST or None.</returns>
+let Decl (tokens : Token list) : Token list * AST option =
+    let tyRem, tyAST = TypeDecl tokens // initialize type ast
+    let idRem, idAST = IdentifierDecl tyRem // initialize identifier ast
     
-    (idRem, {
-        decoration = "DeclTree"
-        token = DECLARE
-        children = [tyAST;  idAST]
-    })
+    match tyAST, idAST with
+    | Some tyAST, Some idAST -> idRem, Some {
+            decoration = "DeclTree"
+            token = DECLARE
+            children = [tyAST;  idAST]
+        }
+    | _ -> tokens, None // propagate None upwards

@@ -6,61 +6,66 @@ open Transpiler.AbstractSyntaxTree.IdentifierTree
 open Transpiler.AbstractSyntaxTree.DeclTree
 open Transpiler.AbstractSyntaxTree.BlockTree
 
-
-let rec Func (tokens: Token list) : Token list * AST =
+/// <summary>
+/// A function that attempts to create a Function Declaration AST.
+/// Function Declaration ASTs consist of a Type AST, Identifier AST, Arg Tree, and a Function body tree.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed token list and a Function AST or None.</returns>
+let rec Func (tokens: Token list) : Token list * AST option =
     match tokens with
     | PROC :: IDENTIFIER _ :: _ -> FuncDecl tokens
-    | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: PROC IDENTIFIER.\nFound: {tokens[0..2]}")
-
-and FuncDecl (tokens: Token list) : Token list * AST =
-    match tokens[1..] with
-    | IDENTIFIER _ :: ASSIGN :: _ ->
-        let rem, id = Identifier tokens[1..]
-        match rem with
-        | ASSIGN :: tail ->
-            let rem, args = FuncArgs tail
-            let rem, retType = TypeDecl rem
-            
-            match rem with
-            | COLON :: tail ->
-                let rem, body = FuncBody tail
-                rem, {
+    | _ -> tokens, None // propagate None upwards
+and FuncDecl (tokens: Token list) : Token list * AST option =
+    match Identifier tokens[1..] with
+    | ASSIGN :: tail, Some id ->
+        let rem, args = FuncArgs tail
+        let rem, retType = TypeDecl rem
+        
+        match rem, args, retType with
+        | COLON :: rem , Some args, Some retType ->
+            match FuncBody rem with
+            | rem, Some body  -> rem, Some {
                   token = tokens[0]
                   decoration = "FuncTree"
                   children = [ retType; id; args; body ]
                 }
-            | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: COLON.\nFound: {tokens[0]}")
-        | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: ASSIGN.\nFound: {tokens[0]}")
-    | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: IDENTIFIER.\nFound: {tokens[0]}")
+            | _ -> tokens, None // propagate None upwards
+        | _ -> tokens, None // propagate None upwards
+    | _ -> tokens, None // propagate None upwards
 
-and FuncArgs (tokens: Token list) : Token list * AST =
-    let rec Accumulate (tokens: Token list) (accumulator: AST list) : Token list * AST list =
+and FuncArgs (tokens: Token list) : Token list * AST option =
+    let rec Accumulate (tokens: Token list) (accumulator: AST list) : Token list * AST list option =
         match tokens with
-        | TYPE _ :: IDENTIFIER _ :: _ ->
-            let rem, ast = Decl tokens
-            match rem with
-            | SEP :: tail -> Accumulate tail (accumulator @ [ ast ])
-            | R_PAR :: _ -> Accumulate rem (accumulator @ [ ast ])
-            | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: SEP or R_PAR.\nFound: {tokens[0]}")
-        | R_PAR :: tail -> tail, accumulator
-        | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: TYPE or R_PAR.\nFound: {tokens[0]}")
+        | Declaration _ ->
+            match Decl tokens with 
+            | SEP :: tail, Some ast -> Accumulate tail (accumulator @ [ast])
+            | R_PAR :: _ as rem, Some ast -> Accumulate rem (accumulator @ [ast])
+            | _ -> tokens, None
+        | R_PAR :: tail -> tail, Some accumulator
+        | _ -> tokens, None // propagate None upwards
 
     match tokens with
     | L_PAR :: tail ->
-        let rem, accum = Accumulate tail []
-        rem, {
-            token = ARGS
-            decoration = "ArgumentTree"
-            children = accum
-        }
-    | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: L_PAR.\nFound: {tokens[0]}")
-
-and FuncBody (tokens: Token list) : Token list * AST =
+        match Accumulate tail [] with
+        | rem, Some accum -> rem, Some {
+                token = ARGS
+                decoration = "ArgTree"
+                children = accum
+            }
+        | _ -> tokens, None // propagate None upwards
+    | _ -> tokens, None // propagate None upwards
+    
+/// <summary>
+/// A function that attempts to create a Block AST.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed tokens and a Block AST or None.</returns>
+and FuncBody (tokens: Token list) : Token list * AST option =
     match tokens with
     | LINE_END :: tail -> FuncBody tail
     | BEGIN :: tail ->
-        let rem, ast = Block tail
-        match rem with
-        | END :: tail -> tail, ast
-        | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: END.\nFound: {rem[0]}")
-    | _ -> raise (UnexpectedToken $"Unexpected token detected. Expected: BEGIN.\nFound: {tokens[0]}")
+        match Block tail with
+        | END :: tail, Some ast -> tail, Some ast
+        | _ -> tokens, None // propagate None upwards
+    | _ -> tokens, None // propagate None upwards

@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reactive;
-using DynamicData.Binding;
 using ReactiveUI;
 using Transpiler;
 
@@ -28,10 +27,10 @@ public class MainWindowViewModel : ViewModelBase
         
         SaveAlgolSource = ReactiveCommand.Create(() =>
         {
-            var path = $"{Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName}/prog.a68";
-            File.WriteAllText(path, _algolSource);
-            
-            Output = $"Algol source code successfully saved at {path}";
+            var path = AppDomain.CurrentDomain.BaseDirectory;
+            using var f = new StreamWriter(Path.Combine(path, "prog.a68"));
+            f.Write(_algolSource);
+            Output = $"Algol source code successfully saved at {path}.";
         });
     }
     
@@ -84,7 +83,7 @@ public class MainWindowViewModel : ViewModelBase
     
     private void CompileC()
     {
-        var path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+        var path = AppDomain.CurrentDomain.BaseDirectory;;
 
         SaveC();
         
@@ -120,10 +119,10 @@ public class MainWindowViewModel : ViewModelBase
 
     private void RunC()
     {
-        var path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+        var path = AppDomain.CurrentDomain.BaseDirectory;
         var startInfo = new ProcessStartInfo
         {
-            FileName = $"{path}/prog.o",
+            FileName = Path.Combine(path, "prog.o"),
             Arguments = "",
             CreateNoWindow = true,
             UseShellExecute = false,
@@ -153,7 +152,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void LoadAlgol()
     {
-        var path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+        var path = AppDomain.CurrentDomain.BaseDirectory;
         var startInfo = new ProcessStartInfo
         {
             FileName = "cat",
@@ -185,7 +184,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void LoadC()
     {
-        var path = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
+        var path = AppDomain.CurrentDomain.BaseDirectory;;
         var startInfo = new ProcessStartInfo
         {
             FileName = "cat",
@@ -217,7 +216,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void SaveC()
     {
-        var path = $"{Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName}/prog.c";
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "prog.c");
         File.WriteAllText(path, _cSource);
 
         Output = $"C source code successfully saved at {path}";

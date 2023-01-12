@@ -1,6 +1,6 @@
 proc hello = (int y, int z) int:
 begin
-	int i = 0;
+	int i = y + z;
 end
 
 proc main = () int:
@@ -10,5 +10,8 @@ begin
 	if i == j then
 		j := j + i;
 		i := i + i + j + 300;
+	else 
+		i := j;
+		hello(i, j);
 	fi
 end

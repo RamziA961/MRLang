@@ -1,7 +1,6 @@
 module Transpiler.Lexer.Token
 
-open System
-
+/// Valid tokens for use during transpilation process. Some tokens are generated during parsing.
 type Token =
     | I of int | F of float | B of bool | S of string
     | IDENTIFIER of string
@@ -17,6 +16,7 @@ type Token =
     | PROGRAM
     | COLON | SEP | LINE_END
 
+/// Reserved keywords that cannot be used as identifier names. 
 let ReservedKeyword = Set(seq {
     "not"
     "int"; "float"; "real"; "string"; "bool"; "char"
@@ -25,18 +25,3 @@ let ReservedKeyword = Set(seq {
     "true"; "false"
     "proc"; "begin"; "end"
 })
-
-let IsInteger (s: string) : bool =
-     s.Length > 0 && (Seq.head s = '-' || Char.IsDigit (char(Seq.head s))) && Seq.forall Char.IsDigit s[1..]
-     
-let IsFloat (s: string) : bool =
-    (Seq.head s = '-' || Char.IsDigit (char(Seq.head s))) &&
-    Seq.forall (fun x ->  Char.IsDigit x || x = '.') s[1..] &&
-    Seq.length (Seq.filter (fun x -> x = '.') s) = 1 &&
-    Seq.last s <> '.' &&
-    Seq.head s <> '.'
-
-let isIdentifier (s: string) : bool =
-    s.Length <> 0 &&
-    Char.IsLetter(Seq.head s) && Char.IsLetter(Seq.last s) &&
-    Seq.forall (fun x -> Char.IsLetterOrDigit x || x = '_') s[1.. s.Length - 1] 

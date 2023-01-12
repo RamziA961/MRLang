@@ -11,54 +11,48 @@ open Transpiler.AbstractSyntaxTree.IdentifierTree
     <assignment> := <decl>'='(<expr>|<string>) | <identifier>':='(<expr>|<string>) 
 *)
 
-let isAssign (tokens : Token list) : bool =
+/// <summary>
+/// Active pattern that matches Assignments.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Some if the first sequence of tokens is an assignment, otherwise None. </returns>
+let (|Assignment|_|) (tokens: Token list) =
     match tokens with
-    | TYPE _ :: _ ->
-        isDecl tokens[0..1]
-        && match tokens[2] with
-            | ASSIGN | MUTATE ->
-                true
-            | _ -> false
-        && (isExpr tokens[3..] || match tokens[3..] with S _ :: _ -> true | _ -> false)
-    | IDENTIFIER _ :: _ ->
-        match tokens[1] with
-        | MUTATE ->
-            true
-        | _ -> false
-        && (isExpr tokens[2..] || match tokens[3..] with S _ :: _ -> true | _ -> false)
-    | _ -> false
+    | IDENTIFIER _ :: MUTATE :: _ -> Some(tokens)
+    | TYPE _ :: IDENTIFIER _ :: (ASSIGN | MUTATE) :: _ -> Some(tokens)
+    | _ -> None
+
+/// <summary>
+/// Attempts to create an Assignment/Mutate AST. It can consist of a Declaration AST and
+/// an Expression/String AST or an Identifier AST and an Expression/String AST.
+/// </summary>
+/// <param name="tokens">A token list.</param>
+/// <returns>Unparsed token list and an Assign/Mutate AST or None.</returns>
+let Assign (tokens: Token list) : Token list * AST option =
+  
+    let Assignment (tokens : Token list, ast : AST option) = 
+        match tokens, ast with
+        | _, None -> tokens, ast
+        | ASSIGN | MUTATE as tok :: tail, Some ast ->
+            // match tail with String or Expression
+            let remTokens, expr = match tail with
+                                  | S s :: tail -> tail, Some { token = S s; children = []; decoration = "CharTree" } 
+                                  | _ -> Expr tail
             
-           
-let Assign (tokens: Token list) : Token list * AST =
-    let Assignment (tokens : Token list, ast : AST) = 
-        match tokens with
-        | ASSIGN :: tail ->
-            let remTokens, expr =
-                match tail with
-                | S s :: tail -> tail, { token = S s; children = []; decoration = "charTree" } 
-                | _ -> Expr tail
-            (remTokens, {
-                children = [ast; expr]
-                decoration = "AssignTree"
-                token = tokens.Head
-            })
-        | MUTATE :: tail ->
-            let remTokens, expr =
-                match tail with
-                | S s :: tail -> tail, { token = S s; children = []; decoration = "charTree" } 
-                | _ -> Expr tail
-            (remTokens, {
-                children = [ast; expr]
-                decoration = "MutateTree"
-                token = tokens.Head
-            })
-        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected ASSIGN or MUTATE.")
+            match expr with
+            | Some expr -> remTokens, Some {
+                    children = [ast; expr]
+                    decoration = match tok with | ASSIGN -> "AssignTree" | MUTATE -> "MutateTree"
+                    token = tok
+                }
+            | None -> tokens, None // propagate None upwards.
+        | _ -> tokens, ast
     
-    let NonTerminal (tokens: Token list) : Token list * AST =
+    let NonTerminal (tokens: Token list) : Token list * AST option =
         match tokens with
-        | TYPE _ :: _ -> Decl tokens
-        | IDENTIFIER _ :: _ -> Identifier tokens
-        | _ -> raise(UnexpectedToken $"Unexpected token encountered: {tokens[0]}. Expected TYPE or IDENTIFIER.")
+        | TYPE _ :: _ -> Decl tokens // Create a Declaration AST
+        | IDENTIFIER _ :: _ -> Identifier tokens  // Create an identifier AST
+        | _ -> tokens, None
      
     (NonTerminal >> Assignment) tokens
     

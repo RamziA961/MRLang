@@ -30,6 +30,11 @@ open Transpiler.Lexer.Token
     <primary> ::= <int> | <float> | <bool> | "(" <expr> ")"
 *)
 
+/// <summary>
+/// Determine whether given sequence of tokens are an expression.
+/// </summary>
+/// <param name="accumulatedTokens">A token list.</param>
+/// <returns>Boolean indicating whether the list of tokens is an expression.</returns>
 let isExpr (accumulatedTokens: Token list) : bool =
     let rec Expression(tokens: Token list) = (Conjunction >> DisjunctionOperation) tokens
     and DisjunctionOperation (tokens : Token list, value: bool) =
@@ -101,304 +106,177 @@ let isExpr (accumulatedTokens: Token list) : bool =
     snd (Expression accumulatedTokens) 
 
 let (|Expr|_|) (tokens: Token list) = if isExpr tokens then Some(tokens) else None      
+
+
+/// <summary>
+/// Converts a list of tokens into an expression AST. If conversion fails None is returned
+/// </summary>
+/// <param name="accumulatedTokens">A token list.</param>
+/// <returns>Unparsed token list and an Expression AST or None.</returns>
+/// <exception cref="SyntaxError">
+/// Throws an exception when a number, parenthetical, identifier, or negation is expected but not found.
+/// </exception>
+let Expr(accumulatedTokens : Token list) : Token list * AST option =
     
-let Expr(accumulatedTokens : Token list) : Token list * AST =
+    // Expression AST generator. Highest priority operations are processed first.
     let rec Expression (tokens : Token list) = (Conjunction >> DisjunctionOperation) tokens
-    and DisjunctionOperation (tokens: Token list, ast: AST)  =
-        match tokens with
-        | OR :: tail ->
-            let remTokens, conjunction = Conjunction tail 
-            DisjunctionOperation (remTokens, {
-                token = OR
-                decoration = "OrTree"
-                children = [ast; conjunction]
-            })
+    and DisjunctionOperation (tokens: Token list, ast: AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | OR :: tail, Some ast -> 
+            // check for higher priority operation (conjunction)
+            let remTokens, conjunction = Conjunction tail
+            match conjunction with
+            | Some conjunction ->
+                DisjunctionOperation (remTokens, Some {
+                    token = OR
+                    decoration = "OrTree"
+                    children = [ast; conjunction]
+                })
+            | None -> tokens, conjunction
         | _ -> (tokens, ast) 
     and Conjunction (tokens : Token list) = (Equality >> ConjunctionOperation) tokens
-    and ConjunctionOperation (tokens: Token list, ast : AST) =
-        match tokens with
-        | AND :: tail ->
+    and ConjunctionOperation (tokens: Token list, ast : AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | AND :: tail, Some ast ->
+            // check for higher priority operation (equality)
             let remTokens, equality = Equality tail
-            ConjunctionOperation(remTokens, {
-                token = AND
-                decoration = "AndTree"
-                children = [ast; equality]
-            })
-        | _ -> (tokens, ast)
+            match equality with
+            | Some equality -> 
+                ConjunctionOperation(remTokens, Some {
+                    token = AND
+                    decoration = "AndTree"
+                    children = [ast; equality]
+                })
+            | None -> tokens, equality
+        | _ -> tokens, ast
     and Equality (tokens : Token list) = (Comparison >> EqualityOperation) tokens
-    and EqualityOperation (tokens: Token list, ast: AST) =
-        match tokens with
-        | EQ :: tail ->
-                let remTokens, comparison = Comparison tail
-                EqualityOperation(remTokens, {
-                    token = EQ
-                    decoration = "EqualsTree"
+    and EqualityOperation (tokens: Token list, ast: AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | EQ | NEQ as tok :: tail, Some ast ->
+            // check for higher priority operation (Comparison or Relational operation)
+            let remTokens, comparison = Comparison tail
+            match comparison with
+            | Some comparison -> 
+                EqualityOperation (remTokens, Some {
+                    token = tok
+                    decoration = match tok with | EQ -> "EqualsTree" | NEQ -> "NotEqualsTree"
                     children = [ast; comparison]
                 })
-        | NEQ :: tail ->
-                let remTokens, comparison = Comparison tail
-                EqualityOperation(remTokens, {
-                    token = NEQ
-                    decoration = "NEqualsTree"
-                    children = [ast; comparison]
-                })
-        | _ -> (tokens, ast)
+            | None -> tokens, comparison
+        | _ -> tokens, ast
     and Comparison (tokens: Token list) = (Term >> ComparisonOperation) tokens
-    and ComparisonOperation (tokens: Token list, ast: AST) =
-        match tokens with
-        | GT :: tail ->
+    and ComparisonOperation (tokens: Token list, ast: AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | GT | GEQ | LT | LEQ as tok :: tail, Some ast ->
+            // check for higher priority operation (Term or Addition/Subtraction)
             let remTokens, term = Term tail
-            TermOperation(remTokens, {
-                token = GT
-                decoration = "GreaterThanTree"
-                children = [ast; term]
-            })
-        | GEQ :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, {
-                token = GEQ
-                decoration = "GreaterEqualsTree"
-                children = [ast; term]
-            })
-        | LT :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, {
-                token = LT
-                decoration = "LessThanTree"
-                children = [ast; term]
-            })
-        | LEQ :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, {
-                token = LEQ
-                decoration = "LessEqualsTree"
-                children = [ast; term]
-            })
-        | _ -> (tokens, ast)
+            match term with
+            | Some term ->
+                TermOperation(remTokens, Some {
+                    token = tok
+                    decoration = match tok with | GT -> "GreaterThanTree"
+                                                | GEQ -> "GreaterEqTree"
+                                                | LT -> "LessThanTree"
+                                                | LEQ -> "LessEqTree"
+                    children = [ast; term]
+                })
+            | None -> tokens, term
+        | _ -> tokens, ast
     and Term (tokens: Token list) = (Factor >> TermOperation) tokens
-    and TermOperation (tokens: Token list, ast : AST) =
-        match tokens with
-        | ADD :: tail ->
+    and TermOperation (tokens: Token list, ast : AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | ADD | SUB as tok :: tail, Some ast ->
+            // check for higher priority operation (Factor or Multiplication/Division operation)
             let remTokens, factor = Factor tail
-            TermOperation (remTokens, {
-                token = ADD
-                decoration = "AddTree"
-                children = [ast; factor]
-            })
-        | SUB :: tail ->
-            let remTokens, factor = Factor tail
-            TermOperation (remTokens, {
-                token = SUB
-                decoration = "SubTree"
-                children = [ast; factor]
-            })
-        | _ -> (tokens, ast)    
+            match factor with
+            | Some factor ->
+                TermOperation (remTokens, Some {
+                    token = tok
+                    decoration = match tok with | ADD -> "AddTree" | SUB -> "SubTree"
+                    children = [ast; factor]
+                })
+            | None -> tokens, factor
+        | _ -> tokens, ast   
     and Factor (tokens: Token list) = (Exponentiation >> FactorOperation) tokens
-    and FactorOperation (tokens: Token list, ast: AST) =
-        match tokens with
-        | MUL :: tail ->
+    and FactorOperation (tokens: Token list, ast: AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | MUL | DIV as tok :: tail, Some ast ->
+            // check for higher priority operation (Exponentiation)
             let remTokens, exponentiation = Exponentiation tail
-            FactorOperation (remTokens, {
-                token = MUL
-                decoration = "MulTree"
-                children = [ast; exponentiation]
-            })
-        | DIV :: tail ->
-            let remTokens, exponentiation = Exponentiation tail
-            FactorOperation (remTokens, {
-                token = DIV
-                decoration = "DivTree"
-                children = [ast; exponentiation]
-            })
-        | _ -> (tokens, ast)
+            match exponentiation with
+            | Some exponentiation ->
+                FactorOperation (remTokens, Some {
+                    token = tok
+                    decoration = match tok with | MUL -> "MulTree" | DIV -> "DivTree"
+                    children = [ast; exponentiation]
+                })
+            | None -> tokens, exponentiation
+        | _ -> tokens, ast
     and Exponentiation (tokens: Token list) = (Primary >> ExponentiationOperation) tokens
-    and ExponentiationOperation (tokens : Token list, ast : AST) =
-        match tokens with
-        | EXP :: tail ->
+    and ExponentiationOperation (tokens : Token list, ast : AST option) : Token list * AST option =
+        match tokens, ast with
+        | _, None -> tokens, ast // propagate None upwards.
+        | EXP :: tail, Some ast ->
+            // check for higher priority value (Primary)
             let remTokens, primary = Primary tail
-            ExponentiationOperation (remTokens, {
-                token = EXP
-                decoration = "PowTree"
-                children = [ast; primary]
-            })
-        | _ -> (tokens, ast)
-    and Primary (tokens: Token list) : Token list * AST =
+            match primary with
+            | Some primary ->
+                ExponentiationOperation (remTokens, Some {
+                    token = EXP
+                    decoration = "PowTree"
+                    children = [ast; primary]
+                })
+            | None -> tokens, primary
+        | _ -> tokens, ast
+    and Primary (tokens: Token list) : Token list * AST option =
         match tokens with
         | NOT :: tail ->
             let remTokens, primary = Primary tail
-            (remTokens, {
-                token = NOT
-                decoration = "NotTree"
-                children = [primary]
-            })
+            match primary with
+            | Some primary -> remTokens, Some {
+                    token = NOT
+                    decoration = "NotTree"
+                    children = [primary]
+                }
+            | None -> tokens, primary
         | IDENTIFIER _ :: _ -> Identifier tokens
         | B b :: tail ->
-            tail, {
+            tail, Some {
                 token = B b
                 decoration = "BoolTree"
                 children = []
             }
         | I i :: tail  ->
-            tail, {
+            tail, Some {
                 token = I i
                 decoration = "IntTree"
                 children = []
             }
         | F f :: tail ->
-            tail, {
+            tail, Some {
                 token = F f
                 decoration = "FloatTree"
                 children = []
             }
-        | L_PAR :: tail -> 
+        | L_PAR :: tail ->
+            // construct higher priority Expression.
             let remTokens, value = Expression tail
-            match remTokens with
-            | R_PAR :: tail ->
-                    tail, {
-                        value with children =
+            match remTokens, value with
+            | _, None -> tokens, value
+            | R_PAR :: tail, Some value ->
+                    tail, Some { value with children =
                                     [{children = []; token = L_PAR; decoration = "ParenthesisTree"}] @
                                     value.children @
                                     [{children = []; token = R_PAR; decoration = "ParenthesisTree"}]
                    }
-            | _ -> raise (TokenMatchingError "Mismatched number of parentheses encountered.")
+            | _ -> tokens, value
         | _ -> raise (SyntaxError ("Syntax error encountered. Expected Primitive, L_PAR, R_PAR, or NOT." +
                       $"\nTOKEN DUMP: %A{tokens}."))
+    
     Expression accumulatedTokens
-            
-            
-let ExprEval (accumulatedTokens: Token list) : Token =
-    let rec Expression (tokens: Token list) = (Conjunction >> DisjunctionOperation) tokens
-    and DisjunctionOperation (tokens : Token list, value : Token) =
-        match tokens with
-        | OR :: tail ->
-            let remTokens, conjunction = Conjunction tail
-            match value, conjunction with
-            | B v, B c ->
-                DisjunctionOperation(remTokens, B (v || c))
-            | _ -> raise (InvalidOperation "The conjunction operation with numerical values is unsupported.")
-        | _ -> (tokens, value)
-    and Conjunction (tokens: Token list) = (Equality >> ConjunctionOperation) tokens
-    and ConjunctionOperation (tokens : Token list, value : Token) =
-        match tokens with
-        | AND :: tail ->
-            let remTokens, equality = Equality tail
-            match value, equality with
-            | B v, B e ->
-                ConjunctionOperation(remTokens, B (v && e))
-            | _ -> raise (InvalidOperation "The disjunction operation with numerical values is unsupported.")
-        | _ -> (tokens, value)
-    and Equality (tokens : Token list) = (Comparison >> EqualityOperation) tokens
-    and EqualityOperation (tokens: Token list, value: Token) =
-        match tokens with
-        | EQ :: tail ->
-                let remTokens, comparison = Comparison tail
-                EqualityOperation(remTokens, B (value = comparison))
-        | NEQ :: tail ->
-                let remTokens, comparison = Comparison tail
-                EqualityOperation(remTokens, B (value <> comparison))
-        | _ -> (tokens, value)
-    and Comparison (tokens: Token list) = (Term >> ComparisonOperation) tokens
-    and ComparisonOperation (tokens: Token list, value: Token) =
-        match tokens with
-        | GT :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, B (value > term))
-        | GEQ :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, B (value >= term))
-        | LT :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, B (value < term))
-        | LEQ :: tail ->
-            let remTokens, term = Term tail
-            TermOperation(remTokens, B (value <= term))
-        | _ -> (tokens, value)
-    and Term (tokens: Token list) = (Factor >> TermOperation) tokens
-    and TermOperation (tokens: Token list, value : Token) =
-        match tokens with
-        | ADD :: tail ->
-            let remTokens, factor = Factor tail
-            match value, factor with
-            | I v, I f ->
-                TermOperation (remTokens, I (v + f))
-            | I v, F f  ->
-                TermOperation (remTokens, F (float v + f))
-            | F v, I f  ->
-                TermOperation (remTokens, F (v + float f))
-            | F v, F f ->
-                TermOperation (remTokens, F (v + f))
-            | _ -> raise (InvalidOperation "Boolean addition is unsupported.")
-        | SUB :: tail ->
-            let remTokens, factor = Factor tail
-            match value, factor with
-            | I v, I f ->
-                TermOperation (remTokens, I (v - f))
-            | I v, F f ->
-                TermOperation (remTokens, F (float v - f))
-            | F v, I f  ->
-                TermOperation (remTokens, F (v - float f))
-            | F v, F f ->
-                TermOperation (remTokens, F (v - f))
-            | _ -> raise (InvalidOperation "Boolean subtraction is unsupported.")
-        | _ -> (tokens, value)
-    and Factor (tokens: Token list) = (Exponentiation >> FactorOperation) tokens
-    and FactorOperation (tokens: Token list, value: Token) =
-        match tokens with
-        | MUL :: tail ->
-            let remTokens, exponentiation = Exponentiation tail
-            match value, exponentiation with
-            | I v, I e ->
-                FactorOperation (remTokens, I (v * e))
-            | I v, F e  ->
-                FactorOperation (remTokens, F (float v * e))
-            | F v, I e  ->
-                FactorOperation (remTokens, F (v * float e))
-            | F v, F e ->
-                FactorOperation (remTokens, F (v * e))
-            | _ -> raise (InvalidOperation "Boolean multiplication is unsupported.")
-        | DIV :: tail ->
-            let remTokens, exponentiation = Exponentiation tail
-            match value, exponentiation with
-            | I v, I e ->
-                FactorOperation (remTokens, I (v / e))
-            | I v, F e  ->
-                FactorOperation (remTokens, F (float v / e))
-            | F v, I e  ->
-                FactorOperation (remTokens, F (v / float e))
-            | F v, F e ->
-                FactorOperation (remTokens, F (v / e))
-            | _ -> raise (InvalidOperation "Boolean division is unsupported.")
-        | _ -> (tokens, value)
-    and Exponentiation (tokens: Token list) = (Primary >> ExponentiationOperation) tokens
-    and ExponentiationOperation (tokens : Token list, value : Token) =
-        match tokens with
-        | EXP :: tail ->
-            let remTokens, primary = Primary tail
-            match value, primary with
-            | I v, I f ->
-                ExponentiationOperation (remTokens, I (pown v  f))
-            | I v, F f ->
-                ExponentiationOperation (remTokens, F (float v ** f))
-            | F v, I f ->
-                ExponentiationOperation (remTokens, F (v ** float f))
-            | F v, F f ->
-                ExponentiationOperation (remTokens, F (v ** f))
-            | _ -> raise (InvalidOperation "Boolean exponentiation is unsupported.")
-        | _ -> (tokens, value)
-    and Primary (tokens: Token list) : Token list * Token =
-        match tokens with
-        | IDENTIFIER id :: tail ->
-            (tail, IDENTIFIER id)
-        | B b :: tail ->
-            (tail, B b)
-        | I i :: tail ->
-            (tail, I i)
-        | F f :: tail ->
-            (tail, F f)
-        | L_PAR :: tail -> 
-            let remTokens, value = Expression tail
-            match remTokens with
-            | R_PAR :: tail -> (tail, value)
-            | _ -> raise (TokenMatchingError "Mismatched number of parentheses encountered.")
-            
-    snd (Expression accumulatedTokens)
