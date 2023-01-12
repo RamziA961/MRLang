@@ -4,6 +4,10 @@
 Test out the transpiler and accompanying GUI tool by heading to **Releases**. Download the directory that matches your system.
 To execute the program, launch **GraphicalUserInterface.exe** in the downloaded directory.
 
+**OR**
+
+Download the appropriate zip file from the GitHub release section on the right hand panel. Decompress the zip file and execute the executable.
+
 \
 Only a subset of Algol's features have been implemented thus far.
 \
